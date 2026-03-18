@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Login | CampusChain{% endblock %}
+{% block content %}
+<section class="card auth-card">
+    <h2><i class="fa-solid fa-fingerprint icon"></i>Role-Based Login</h2>
+    <p><i class="fa-solid fa-user-lock icon"></i>Admin, Faculty, and Student access portal</p>
+    <form method="post" class="form-grid">
+        <label><i class="fa-solid fa-envelope icon"></i>Email
+            <input type="email" name="email" required placeholder="user@campuschain.local">
+        </label>
+        <label><i class="fa-solid fa-key icon"></i>Password
+            <input type="password" name="password" required placeholder="Enter password">
+        </label>
+        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-right-to-bracket icon"></i>Sign In</button>
+        <div class="auth-links">
+            <a href="{{ url_for('forgot_password') }}" class="link"><i class="fa-solid fa-unlock-keyhole icon"></i>Forgot password?</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

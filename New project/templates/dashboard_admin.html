@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<section class="card">
+    <h3><i class="fa-solid fa-chart-line icon"></i>Platform Overview</h3>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-label">Users</span>
+            <strong class="stat-value">{{ total_users }}</strong>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Reports</span>
+            <strong class="stat-value">{{ total_reports }}</strong>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Blockchain Blocks</span>
+            <strong class="stat-value">{{ total_blocks }}</strong>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Chain Health</span>
+            <strong class="stat-value">{{ 'Valid' if chain_ok else 'Compromised' }}</strong>
+        </div>
+    </div>
+</section>
+
+<section class="card">
+    <h3><i class="fa-solid fa-database icon"></i>Storage Backend</h3>
+    <p class="tiny">
+        <span class="chip"><i class="fa-solid fa-hard-drive icon"></i>{{ storage_backend|upper }}</span>
+        {% if storage_backend in ['s3', 'firebase'] %}
+        <span class="chip"><i class="fa-solid fa-bucket icon"></i>{{ storage_bucket or 'bucket-not-set' }}</span>
+        {% else %}
+        <span class="chip"><i class="fa-solid fa-folder-tree icon"></i>cloud_storage/</span>
+        {% endif %}
+    </p>
+</section>
+
+<section class="card">
+    <h3><i class="fa-solid fa-sliders icon"></i>Admin Filters</h3>
+    <form method="get" action="{{ url_for('dashboard') }}" class="filters-grid">
+        <label><i class="fa-solid fa-user icon"></i>User Search
+            <input name="user_q" value="{{ user_q }}" placeholder="name/email/role">
+        </label>
+        <label><i class="fa-solid fa-file-lines icon"></i>Report Search
+            <input name="report_q" value="{{ report_q }}" placeholder="title/owner/uploader">
+        </label>
+        <label><i class="fa-solid fa-link icon"></i>Block Action
+            <select name="block_action">
+                <option value="">All</option>
+                <option value="upload" {% if block_action == 'upload' %}selected{% endif %}>Upload</option>
+                <option value="delete" {% if block_action == 'delete' %}selected{% endif %}>Delete</option>
+                <option value="recover" {% if block_action == 'recover' %}selected{% endif %}>Recover</option>
+            </select>
+        </label>
+        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass icon"></i>Apply Filters</button>
+    </form>
+</section>
+
+<div class="grid-2">
+    <section class="card">
+        <h3><i class="fa-solid fa-user-plus icon"></i>Create User</h3>
+        <form method="post" action="{{ url_for('create_user') }}" class="form-grid">
+            <label><i class="fa-solid fa-user icon"></i>Name<input name="name" required></label>
+            <label><i class="fa-solid fa-envelope icon"></i>Email<input type="email" name="email" required></label>
+            <label><i class="fa-solid fa-lock icon"></i>Password<input type="password" name="password" required></label>
+            <label><i class="fa-solid fa-user-tag icon"></i>Role
+                <select name="role" required>
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </label>
+            <label><i class="fa-solid fa-id-card icon"></i>Student ID<input name="student_id" placeholder="For students"></label>
+            <label><i class="fa-solid fa-building-columns icon"></i>Department<input name="department" placeholder="For students"></label>
+            <label><i class="fa-solid fa-school icon"></i>Institution<input name="institution" placeholder="For students"></label>
+            <label><i class="fa-solid fa-calendar-days icon"></i>Enrollment Year<input name="enrollment_year" type="number" min="1990" max="2100" placeholder="For students"></label>
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-circle-plus icon"></i>Create User</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h3><i class="fa-solid fa-cloud-arrow-up icon"></i>Upload Report For Student</h3>
+        <form method="post" action="{{ url_for('upload_report') }}" enctype="multipart/form-data" class="form-grid">
+            <label><i class="fa-solid fa-graduation-cap icon"></i>Student
+                <select name="student_id" required>
+                    <option value="">Select student</option>
+                    {% for s in students %}
+                    <option value="{{ s.id }}">{{ s.name }} ({{ s.email }})</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label><i class="fa-solid fa-file-lines icon"></i>Report Title<input name="report_title" required></label>
+            <label><i class="fa-solid fa-file-arrow-up icon"></i>File<input type="file" name="file" required></label>
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-shield icon"></i>Upload & Seal</button>
+        </form>
+        <p class="tiny"><i class="fa-solid fa-link icon"></i>Blockchain health: <span class="chip {{ 'ok' if chain_ok else 'bad' }}">{{ 'Valid' if chain_ok else 'Compromised' }}</span></p>
+    </section>
+</div>
+
+<section class="card">
+    <h3><i class="fa-solid fa-users-gear icon"></i>User Monitoring</h3>
+    <table>
+        <thead>
+            <tr><th>User ID</th><th>Name</th><th>Email</th><th>Role</th><th>Student ID</th><th>Department</th><th>Institution</th><th>Enrollment Year</th><th>Status</th><th>Reports</th><th>Last Activity</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td>{{ u.id }}</td>
+                <td>{{ u.name }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.role }}</td>
+                <td>{{ u.student_id or '-' }}</td>
+                <td>{{ u.department or '-' }}</td>
+                <td>{{ u.institution or '-' }}</td>
+                <td>{{ u.enrollment_year or '-' }}</td>
+                <td>{{ u.status }}</td>
+                <td>{{ u.report_count }}</td>
+                <td>{{ u.last_activity or '-' }}</td>
+                <td>
+                    <form method="post" action="{{ url_for('toggle_user', user_id=u.id) }}">
+                        <button class="btn btn-small" type="submit"><i class="fa-solid fa-power-off icon"></i>{{ 'Disable' if u.status == 'active' else 'Enable' }}</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="pager">
+        <a class="btn btn-small" href="{{ page_url(users_page=1) }}">First</a>
+        <a class="btn btn-small" href="{{ page_url(users_page=users_page-1 if users_page > 1 else 1) }}">Prev</a>
+        <span class="tiny">Page {{ users_page }} / {{ users_pages }}</span>
+        <a class="btn btn-small" href="{{ page_url(users_page=users_page+1 if users_page < users_pages else users_pages) }}">Next</a>
+        <a class="btn btn-small" href="{{ page_url(users_page=users_pages) }}">Last</a>
+    </div>
+</section>
+
+<section class="card">
+    <h3><i class="fa-solid fa-folder-open icon"></i>Active Reports</h3>
+    <table>
+        <thead><tr><th>ID</th><th>Title</th><th>Owner</th><th>Uploaded By</th><th>Time</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for r in reports %}
+            <tr>
+                <td>{{ r.id }}</td><td>{{ r.report_title }}</td><td>{{ r.owner_name }}</td><td>{{ r.uploader_name }}</td><td>{{ r.uploaded_at }}</td>
+                <td class="actions">
+                    <a class="btn btn-small" href="{{ url_for('download_report', report_id=r.id) }}"><i class="fa-solid fa-download icon"></i>Download</a>
+                    <form method="post" action="{{ url_for('verify_report', report_id=r.id) }}"><button class="btn btn-small" type="submit"><i class="fa-solid fa-check-double icon"></i>Verify</button></form>
+                    <form method="post" action="{{ url_for('delete_report', report_id=r.id) }}"><button class="btn btn-small btn-danger" type="submit"><i class="fa-solid fa-trash-can icon"></i>Delete</button></form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="pager">
+        <a class="btn btn-small" href="{{ page_url(reports_page=1) }}">First</a>
+        <a class="btn btn-small" href="{{ page_url(reports_page=reports_page-1 if reports_page > 1 else 1) }}">Prev</a>
+        <span class="tiny">Page {{ reports_page }} / {{ reports_pages }}</span>
+        <a class="btn btn-small" href="{{ page_url(reports_page=reports_page+1 if reports_page < reports_pages else reports_pages) }}">Next</a>
+        <a class="btn btn-small" href="{{ page_url(reports_page=reports_pages) }}">Last</a>
+    </div>
+</section>
+
+<section class="card">
+    <h3><i class="fa-solid fa-cubes-stacked icon"></i>Blockchain Explorer</h3>
+    <table>
+        <thead><tr><th>Block ID</th><th>Action</th><th>Entity</th><th>Payload Hash</th><th>Prev Hash</th><th>Block Hash</th><th>Time</th></tr></thead>
+        <tbody>
+            {% for b in blocks %}
+            <tr>
+                <td>{{ b.id }}</td>
+                <td>{{ b.action }}</td>
+                <td>{{ b.entity_id }}</td>
+                <td title="{{ b.payload_hash }}">{{ b.payload_hash[:14] }}...</td>
+                <td title="{{ b.prev_hash }}">{{ b.prev_hash[:14] }}...</td>
+                <td title="{{ b.block_hash }}">{{ b.block_hash[:14] }}...</td>
+                <td>{{ b.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="pager">
+        <a class="btn btn-small" href="{{ page_url(blocks_page=1) }}">First</a>
+        <a class="btn btn-small" href="{{ page_url(blocks_page=blocks_page-1 if blocks_page > 1 else 1) }}">Prev</a>
+        <span class="tiny">Page {{ blocks_page }} / {{ blocks_pages }}</span>
+        <a class="btn btn-small" href="{{ page_url(blocks_page=blocks_page+1 if blocks_page < blocks_pages else blocks_pages) }}">Next</a>
+        <a class="btn btn-small" href="{{ page_url(blocks_page=blocks_pages) }}">Last</a>
+    </div>
+</section>
+
+<section class="card">
+    <h3><i class="fa-solid fa-recycle icon"></i>Recovery Bin</h3>
+    <table>
+        <thead><tr><th>Original ID</th><th>Title</th><th>Deleted At</th><th>Recover</th></tr></thead>
+        <tbody>
+            {% for item in recycle %}
+            <tr>
+                <td>{{ item.report_id }}</td>
+                <td>{{ item.report_title }}</td>
+                <td>{{ item.deleted_at }}</td>
+                <td>
+                    <form method="post" action="{{ url_for('recover_report', bin_id=item.id) }}">
+                        <button class="btn btn-small" type="submit"><i class="fa-solid fa-rotate-left icon"></i>Recover</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<section class="card">
+    <div class="section-head">
+        <h3><i class="fa-solid fa-clock-rotate-left icon"></i>Recent Activity</h3>
+        <a class="btn btn-small" href="{{ url_for('export_logs_csv') }}"><i class="fa-solid fa-file-csv icon"></i>Export CSV</a>
+    </div>
+    <table>
+        <thead><tr><th>User</th><th>Action</th><th>Details</th><th>Time</th></tr></thead>
+        <tbody>
+            {% for l in logs %}
+            <tr><td>{{ l.name }}</td><td>{{ l.action }}</td><td>{{ l.details or '-' }}</td><td>{{ l.created_at }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="pager">
+        <a class="btn btn-small" href="{{ page_url(logs_page=1) }}">First</a>
+        <a class="btn btn-small" href="{{ page_url(logs_page=logs_page-1 if logs_page > 1 else 1) }}">Prev</a>
+        <span class="tiny">Page {{ logs_page }} / {{ logs_pages }}</span>
+        <a class="btn btn-small" href="{{ page_url(logs_page=logs_page+1 if logs_page < logs_pages else logs_pages) }}">Next</a>
+        <a class="btn btn-small" href="{{ page_url(logs_page=logs_pages) }}">Last</a>
+    </div>
+</section>
+{% endblock %}
+
+
+
+
+
+
+

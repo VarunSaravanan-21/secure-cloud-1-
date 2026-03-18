@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CampusChain{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="bg"></div>
+    <header class="topbar">
+        <div>
+            <h1><i class="fa-solid fa-shield-halved icon"></i>CampusChain Vault</h1>
+            <p><i class="fa-solid fa-link icon"></i>Secure academic report cloud with blockchain integrity</p>
+        </div>
+        {% if session.get('user_id') %}
+        <div class="top-actions">
+            <span class="chip"><i class="fa-solid fa-user-tag icon"></i>{{ session.get('role', '').title() }}</span>
+            <span class="chip"><i class="fa-solid fa-user icon"></i>{{ session.get('name', '') }}</span>
+            <a class="btn btn-ghost" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket icon"></i>Logout</a>
+        </div>
+        {% endif %}
+    </header>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alerts">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

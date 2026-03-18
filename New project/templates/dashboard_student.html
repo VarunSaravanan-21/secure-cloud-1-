@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard{% endblock %}
+{% block content %}
+<section class="card">
+    <h3><i class="fa-solid fa-database icon"></i>Storage Backend</h3>
+    <p class="tiny">
+        <span class="chip"><i class="fa-solid fa-hard-drive icon"></i>{{ storage_backend|upper }}</span>
+        {% if storage_backend in ['s3', 'firebase'] %}
+        <span class="chip"><i class="fa-solid fa-bucket icon"></i>{{ storage_bucket or 'bucket-not-set' }}</span>
+        {% else %}
+        <span class="chip"><i class="fa-solid fa-folder-tree icon"></i>cloud_storage/</span>
+        {% endif %}
+    </p>
+</section>
+<div class="grid-2">
+    <section class="card">
+        <h3><i class="fa-solid fa-cloud-arrow-up icon"></i>Upload My Academic Report</h3>
+        <form method="post" action="{{ url_for('upload_report') }}" enctype="multipart/form-data" class="form-grid">
+            <label><i class="fa-solid fa-file-lines icon"></i>Report Title<input name="report_title" required></label>
+            <label><i class="fa-solid fa-file-arrow-up icon"></i>File<input type="file" name="file" required></label>
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-shield icon"></i>Upload & Seal</button>
+        </form>
+        <p class="tiny"><i class="fa-solid fa-link icon"></i>Blockchain health: <span class="chip {{ 'ok' if chain_ok else 'bad' }}">{{ 'Valid' if chain_ok else 'Compromised' }}</span></p>
+    </section>
+
+    <section class="card">
+        <h3><i class="fa-solid fa-recycle icon"></i>Recovery Bin</h3>
+        <table>
+            <thead><tr><th>Original ID</th><th>Title</th><th>Deleted At</th><th>Recover</th></tr></thead>
+            <tbody>
+                {% for item in recycle %}
+                <tr>
+                    <td>{{ item.report_id }}</td>
+                    <td>{{ item.report_title }}</td>
+                    <td>{{ item.deleted_at }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('recover_report', bin_id=item.id) }}">
+                            <button class="btn btn-small" type="submit"><i class="fa-solid fa-rotate-left icon"></i>Recover</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<section class="card">
+    <h3><i class="fa-solid fa-folder-open icon"></i>My Reports</h3>
+    <table>
+        <thead><tr><th>ID</th><th>Title</th><th>User ID</th><th>Student ID</th><th>Department</th><th>Institution</th><th>Enrollment Year</th><th>Uploaded By</th><th>Time</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for r in reports %}
+            <tr>
+                <td>{{ r.id }}</td><td>{{ r.report_title }}</td><td>{{ r.owner_user_id }}</td><td>{{ r.owner_student_id or '-' }}</td><td>{{ r.owner_department or '-' }}</td><td>{{ r.owner_institution or '-' }}</td><td>{{ r.owner_enrollment_year or '-' }}</td><td>{{ r.uploader_name }}</td><td>{{ r.uploaded_at }}</td>
+                <td class="actions">
+                    <a class="btn btn-small" href="{{ url_for('download_report', report_id=r.id) }}"><i class="fa-solid fa-download icon"></i>Download</a>
+                    <form method="post" action="{{ url_for('verify_report', report_id=r.id) }}"><button class="btn btn-small" type="submit"><i class="fa-solid fa-check-double icon"></i>Verify</button></form>
+                    {% if r.uploaded_by == session.get('user_id') %}
+                    <form method="post" action="{{ url_for('delete_report', report_id=r.id) }}"><button class="btn btn-small btn-danger" type="submit"><i class="fa-solid fa-trash-can icon"></i>Delete</button></form>
+                    {% else %}
+                    <span class="tiny">Delete locked</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}
+
+
+
+
+
+
+
